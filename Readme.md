@@ -54,6 +54,14 @@ This is an attempt to make the interaction with ServiceManager on Unix / command
 
 * git clone / download
 
+### Supported actions
+
+* Stoping service
+* Starting service
+* Restarting service
+* Shutdown Automic System
+* Stop abnormally
+
 ### Usage
 
 The script can be started in two modes
@@ -86,11 +94,12 @@ The format of the configuration file is following:
 ```
 You can define as many connections as you like
 
+**Demo:**
+
+![Demo Config](demos/pasdi_config.gif)
 
 
-
-
-
+If there is only one connection defined in the config file you will not get prompted of course. 
 
 
 
@@ -98,6 +107,14 @@ You can define as many connections as you like
 
 In this mode the script will ask you ( of use env variables ) to establish the connection to ServiceManager
 
+Demo providing all the data interactively:
+
+![Demo Interactive](demos/pasdi_interactive.gif)
+
+
+Demo reading most of the necessary data from the env variables:
+
+![Demo Env](demos/pasdi_env.gif)
 
 
 
