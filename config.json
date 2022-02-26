@@ -1,0 +1,18 @@
+{ "connections": [
+  {
+    "name": "Test_V12.3",
+    "host": "localhost",
+    "port": "8872",
+    "phrase": "Automic1",
+    "pass": false,
+    "smgrclPath": "/app/Automic_12.3/Automation.Platform/ServiceManager/bin/ucybsmcl"
+    }, 
+{
+    "name": "Test_V21",
+    "host": "localhost",
+    "port": "8871",
+    "phrase": "Automic",
+    "pass": false,
+    "smgrclPath": "/app/Automic/Automation.Platform/ServiceManager/bin/ucybsmcl"
+}
+]}
