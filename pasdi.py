@@ -198,13 +198,13 @@ def validateCommit(inputCommit):
 
 def validateNumber(inputNumber, procList):
     while inputNumber not in range(1, len(procList)):
-        inputNumber = int(input("Invalind number, try again: "))
+        inputNumber = int(input("Invalid number, try again: "))
     
     return inputNumber
 
 def validateAction(inputAction):
     while inputAction not in ("K","KA","KS","R","S","Q","RE"):
-        inputAction= input("Invalind action, try again ").upper()
+        inputAction= input("Invalid action, try again ").upper()
     
     return inputAction
 
