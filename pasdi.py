@@ -84,7 +84,9 @@ smgrArgs = [smgrPath,'-h', smgrHost, '-n', smgrPhrase, '-p', smgrPass]
 os.environ['LD_LIBRARY_PATH'] = smgrPath.replace("ucybsmcl", "") 
 
 
-# -------------------
+# ---------------------------------------------------
+#      Supporting functions 
+# ---------------------------------------------------
 
 def clrScreen():
     result = subprocess.run("clear")
@@ -211,6 +213,11 @@ def validateAction(inputAction):
         inputAction= input("Invalid action, try again ").upper()
     
     return inputAction
+
+
+# ---------------------------------------------------
+#      Main loop
+# ---------------------------------------------------
 
 #Version = getVersion()
 # print(Version)
