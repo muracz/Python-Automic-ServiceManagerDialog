@@ -125,7 +125,7 @@ def getProcessList():
     # Header 
     clrScreen()
     print()
-    print("Host: %s\t\t\tPhrase:  %s"  % (smgrHost, smgrPhrase)) 
+    print("Host: %s\t\t       Phrase:  %s"  % (smgrHost, smgrPhrase)) 
     print("Current time: %s".rjust(55)  % (datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"))) 
     print('-' * 72)
     print("| %2s | %25s | %1s | %10s | %18s | " % ("#", "Process Name", "", "PID", "Timestamp"))
