@@ -2,7 +2,6 @@
 ![Automic-12.3](https://img.shields.io/badge/automic-12.3-orange) &nbsp;  &nbsp;
 ![Automic-21](https://img.shields.io/badge/automic-21-orange)  
 
-</br>
 
 # Python Automic ServiceManagerDialog
 
