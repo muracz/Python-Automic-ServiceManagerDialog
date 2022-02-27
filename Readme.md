@@ -1,3 +1,8 @@
+![Python](https://img.shields.io/badge/python-3-blue) &nbsp;  &nbsp;
+![Automic-12.3](https://img.shields.io/badge/automic-12.3-orange) &nbsp;  &nbsp;
+![Automic-21](https://img.shields.io/badge/automic-21-orange)  
+
+</br>
 # Python Automic ServiceManagerDialog
 
 A CLI GUI wrapper for the Automic [ucybsmcl](https://docs.automic.com/documentation/webhelp/english/AA/21.0/DOCU/21.0/Automic%20Automation%20Guides/Content/ServiceManager/ServiceManager_CLI.htm)
@@ -48,7 +53,7 @@ This is an attempt to make the interaction with ServiceManager on Unix / command
 ### Dependencies
 
 * Python3 with standard libraries, no external dependecies used
-* Any version of ucybsmcl
+* Any modern version of ucybsmcl
 
 ### Installing
 
@@ -56,17 +61,25 @@ This is an attempt to make the interaction with ServiceManager on Unix / command
 
 ### Supported actions
 
+* Listing services
 * Stoping service
 * Starting service
 * Restarting service
 * Shutdown Automic System
 * Stop abnormally
 
+### Still pending / To Do
+
+* Support for certificates for authorisation
+* Support for SET_DATA command in ucybsmcl
+
 ### Usage
+
+The process list can be refreshed either manually (RE action) or by default it refreshes every 10 seconds automatically as long as we are not in the middle the process triggering a action ( for example the script is waiting for us to commit or select a service number ).
 
 The script can be started in two modes
 
-#### With configuration file as parameter
+####  Providing a configuration file as parameter
 
 In this mode the script will process the data in the configuration file provided and let you choose which system you want to configure. 
 
@@ -92,6 +105,7 @@ The format of the configuration file is following:
 }
 ]}
 ```
+
 You can define as many connections as you like
 
 **Demo:**
@@ -107,20 +121,15 @@ If there is only one connection defined in the config file you will not get prom
 
 In this mode the script will ask you ( of use env variables ) to establish the connection to ServiceManager
 
-Demo providing all the data interactively:
+**Demo providing all the data interactively:**
 
 ![Demo Interactive](demos/pasdi_interactive.gif)
 
 
-Demo reading most of the necessary data from the env variables:
+**Demo reading most of the necessary data from the env variables:**
 
-![Demo Env](demos/pasdi_env.gif)
+[Demo Env](demos/pasdi_env.gif)
 
-
-
-## Authors
-
-Marcin Uracz 
 
 ## Version History
 
