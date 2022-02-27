@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # Automic Service Manager Wrapper 
 # Created by Marcin Uracz 
-# Github: 
+# Github: https://github.com/muracz/Python-Automic-ServiceManagerDialog
 # 
 
 
