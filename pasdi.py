@@ -13,6 +13,16 @@ import os, sys, subprocess, re, time, json, datetime, select
 
 #  Constants / config 
 
+# Let's have some colours
+class bcolors:
+    OK = '\033[92m' #GREEN
+    WARNING = '\033[93m' #YELLOW
+    FAIL = '\033[91m' #RED
+    RESET = '\033[0m' #RESET COLOR
+
+# Autorefresh in seconds
+autorefresh = 10
+
 def getConfigJSON(file):
     ## Read the config file
     f = open(file)
@@ -73,12 +83,6 @@ smgrArgs = [smgrPath,'-h', smgrHost, '-n', smgrPhrase, '-p', smgrPass]
 # Prepare env 
 os.environ['LD_LIBRARY_PATH'] = smgrPath.replace("ucybsmcl", "") 
 
-# Let's have some colours
-class bcolors:
-    OK = '\033[92m' #GREEN
-    WARNING = '\033[93m' #YELLOW
-    FAIL = '\033[91m' #RED
-    RESET = '\033[0m' #RESET COLOR
 
 # -------------------
 
@@ -219,8 +223,8 @@ while True:
     print("         KA - stop abnormally , KS - shutdown ")
     print("         Q - quit, RE - refresh")
 
-    # Timeout after 10 seconds a.k.a auto-refresh
-    i, o, e = select.select( [sys.stdin], [], [], 10 )
+    # Timeout after n seconds a.k.a auto-refresh
+    i, o, e = select.select( [sys.stdin], [], [], autorefresh)
 
     if i:
         inputAction = validateAction(sys.stdin.readline().strip().upper())
