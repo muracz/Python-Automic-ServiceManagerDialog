@@ -3,6 +3,7 @@
 ![Automic-21](https://img.shields.io/badge/automic-21-orange)  
 
 </br>
+
 # Python Automic ServiceManagerDialog
 
 A CLI GUI wrapper for the Automic [ucybsmcl](https://docs.automic.com/documentation/webhelp/english/AA/21.0/DOCU/21.0/Automic%20Automation%20Guides/Content/ServiceManager/ServiceManager_CLI.htm)
