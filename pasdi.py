@@ -2,7 +2,11 @@
 # Automic Service Manager Wrapper 
 # Created by Marcin Uracz 
 # Github: https://github.com/muracz/Python-Automic-ServiceManagerDialog
-# 
+#  
+# Usage:
+# 1. Interactive mode (no parameters necessary)
+# 2. With configuration - parameter 1 path to a json config file
+#
 
 
 import os, sys, subprocess, re, time, json, datetime, select
