@@ -128,7 +128,7 @@ In this mode the script will ask you ( of use env variables ) to establish the c
 
 **Demo reading most of the necessary data from the env variables:**
 
-[Demo Env](demos/pasdi_env.gif)
+![Demo Env](demos/pasdi_env.gif)
 
 
 ## Version History
