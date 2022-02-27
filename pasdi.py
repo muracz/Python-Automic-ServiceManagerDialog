@@ -20,7 +20,7 @@ class bcolors:
     FAIL = '\033[91m' #RED
     RESET = '\033[0m' #RESET COLOR
 
-# Autorefresh in seconds
+# Autorefresh interval in seconds
 autorefresh = 10
 
 def getConfigJSON(file):
