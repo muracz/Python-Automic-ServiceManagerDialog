@@ -105,7 +105,7 @@ os.environ['LD_LIBRARY_PATH'] = smgrPath.replace("ucybsmcl", "")
 # ---------------------------------------------------
 
 def clrScreen():
-    result = subprocess.run("clear")
+    subprocess.run("clear")
 
 
 def getVersion():
@@ -128,7 +128,7 @@ def getProcessList():
 
     if result.returncode > 0:
         print(result.stdout.decode("utf-8"))
-        quit(result.returncode)
+        exit(result.returncode)
 
     c = 1
     procList = {}
