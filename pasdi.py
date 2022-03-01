@@ -225,8 +225,7 @@ def commitAction(a, p):
 
 # Validation functions
 def validateCommit(inputCommit):
-    if inputCommit.upper() == "Y":
-        return True
+    return inputCommit.upper() == "Y"
 
 
 def validateNumber(inputNumber, procList):
