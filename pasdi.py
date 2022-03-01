@@ -128,7 +128,7 @@ def getProcessList():
 
     if result.returncode > 0:
         print(result.stdout.decode("utf-8"))
-        exit(result.returncode)
+        sys.exit(result.returncode)
 
     c = 1
     procList = {}
