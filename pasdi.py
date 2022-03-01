@@ -1,43 +1,52 @@
 #!/usr/bin/python3
-# Automic Service Manager Wrapper 
-# Created by Marcin Uracz 
+# Automic Service Manager Wrapper
+# Created by Marcin Uracz
 # Github: https://github.com/muracz/Python-Automic-ServiceManagerDialog
-#  
+#
 # Usage:
 # 1. Interactive mode (no parameters necessary)
 # 2. With configuration - parameter 1 path to a json config file
 #
 
 
-import os, sys, subprocess, re, time, json, datetime, select
+import os
+import sys
+import subprocess
+import re
+import time
+import json
+import datetime
+import select
 
 # // TODo
 #  - set_data action for smgr > 12.3
 
 
-#  Constants / config 
+#  Constants / config
 
 # Let's have some colours
 class bcolors:
-    OK = '\033[92m' #GREEN
-    WARNING = '\033[93m' #YELLOW
-    FAIL = '\033[91m' #RED
-    RESET = '\033[0m' #RESET COLOR
+    OK = '\033[92m'  # GREEN
+    WARNING = '\033[93m'  # YELLOW
+    FAIL = '\033[91m'  # RED
+    RESET = '\033[0m'  # RESET COLOR
+
 
 # Autorefresh interval in seconds
 autorefresh = 10
 
+
 def getConfigJSON(file):
-    ## Read the config file
+    # Read the config file
     f = open(file)
     config = json.load(f)
     f.close()
 
     if len(config['connections']) > 1:
-        c = 0 
+        c = 0
         print("Available configurations")
         for conn in config['connections']:
-            print("%2d - %s" %( c, conn['name']))
+            print("%2d - %s" % (c, conn['name']))
             c += 1
 
         connID = input("Choose the config: ")
@@ -45,65 +54,71 @@ def getConfigJSON(file):
     else:
         connID = 0
 
-
     smgrPath = config['connections'][connID]['smgrclPath']
     smgrPort = config['connections'][connID]['port']
     smgrHost = config['connections'][connID]['host']
     smgrPhrase = config['connections'][connID]['phrase']
     if config['connections'][connID]['pass']:
-        smgrPass =  input("Enter the ServiceManager Pasword: ")
-    else:  
+        smgrPass = input("Enter the ServiceManager Pasword: ")
+    else:
         smgrPass = ""
-    
+
     return smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass
+
 
 def getConfigInput():
-    
-    smgrPath = input("Path to ucybsmcl. Leave empty to use env variable $AUTOMIC_SMCL:  ") or os.getenv('AUTOMIC_SMCL')
+
+    smgrPath = input(
+        "Path to ucybsmcl. Leave empty to use env variable $AUTOMIC_SMCL:  ") or os.getenv('AUTOMIC_SMCL')
     smgrHost = input("Hostame: ")
-    smgrPort = input("ServiceManager port. Leave empty to use env variable $AUTOMIC_SMPORT:  ") or os.getenv('AUTOMIC_SMPORT')
-    smgrPhrase = input("Phrase. Leave empty to use env variable $AUTOMIC_PHRASE:  ") or os.getenv('AUTOMIC_SMCL')
-    smgrPass = input("Password. Leave empty if no password is configured ") 
+    smgrPort = input("ServiceManager port. Leave empty to use env variable $AUTOMIC_SMPORT:  ") or os.getenv(
+        'AUTOMIC_SMPORT')
+    smgrPhrase = input(
+        "Phrase. Leave empty to use env variable $AUTOMIC_PHRASE:  ") or os.getenv('AUTOMIC_SMCL')
+    smgrPass = input("Password. Leave empty if no password is configured ")
 
     return smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass
 
-# Get the config     
-try:
-    smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass = getConfigJSON(sys.argv[1])
-except: 
-    smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass = getConfigInput()
 
+# Get the config
+try:
+    smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass = getConfigJSON(
+        sys.argv[1])
+except:
+    smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass = getConfigInput()
 
 
 # We need the port always when set so why do it over and over again
 if smgrPort is not None:
     smgrHost = smgrHost + ":" + smgrPort
 
-## Build Preliminary argList
-smgrArgs = [smgrPath,'-h', smgrHost, '-n', smgrPhrase, '-p', smgrPass]
-        
+# Build Preliminary argList
+smgrArgs = [smgrPath, '-h', smgrHost, '-n', smgrPhrase, '-p', smgrPass]
 
 
-# Prepare env 
-os.environ['LD_LIBRARY_PATH'] = smgrPath.replace("ucybsmcl", "") 
+# Prepare env
+os.environ['LD_LIBRARY_PATH'] = smgrPath.replace("ucybsmcl", "")
 
 
 # ---------------------------------------------------
-#      Supporting functions 
+#      Supporting functions
 # ---------------------------------------------------
 
 def clrScreen():
     result = subprocess.run("clear")
 
+
 def getVersion():
     result = subprocess.run([smgrPath, '-v'], stdout=subprocess.PIPE)
 
     try:
-        Version = re.search('([0-9.-]+)\+', result.stdout.decode("utf-8")).group(1)
+        Version = re.search(
+            '([0-9.-]+)\+', result.stdout.decode("utf-8")).group(1)
         return Version
     except AttributeError:
         print('Error: Could not find version')
         return None
+
 
 def getProcessList():
     smgrArgs.append("-c")
@@ -119,18 +134,20 @@ def getProcessList():
     procList = {}
     # Populate the dict
     for line in result.stdout.decode("utf-8").splitlines():
-       procList[c] = line.replace("\"","").split(" ")
-       c += 1
+        procList[c] = line.replace("\"", "").split(" ")
+        c += 1
 
-    # Header 
+    # Header
     clrScreen()
     print()
-    print("Host: %s\t\t       Phrase:  %s"  % (smgrHost, smgrPhrase)) 
-    print("Current time: %s".rjust(55)  % (datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"))) 
+    print("Host: %s\t\t       Phrase:  %s" % (smgrHost, smgrPhrase))
+    print("Current time: %s".rjust(55) %
+          (datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")))
     print('-' * 72)
-    print("| %2s | %25s | %1s | %10s | %18s | " % ("#", "Process Name", "", "PID", "Timestamp"))
+    print("| %2s | %25s | %1s | %10s | %18s | " %
+          ("#", "Process Name", "", "PID", "Timestamp"))
     print('-' * 72)
-    ## Print  
+    # Print
     for c in procList:
         # Make it pretty
         procName = procList[c][0].ljust(25)
@@ -143,7 +160,7 @@ def getProcessList():
         try:
             procTimestamp = procList[c][3] + " - " + procList[c][4]
         except IndexError:
-            procTimestamp  = ''
+            procTimestamp = ''
 
     # Add the colours
         if procStatus == "R":
@@ -151,10 +168,12 @@ def getProcessList():
         else:
             procStatus = bcolors.FAIL + procStatus + bcolors.RESET
 
-        print("| %2d | %25s | %3s | %10s | %18s | " % (c, procName,procStatus, procPID,procTimestamp))
+        print("| %2d | %25s | %3s | %10s | %18s | " %
+              (c, procName, procStatus, procPID, procTimestamp))
     return procList
 
-def stopProcess(ProcName,Mode=None):
+
+def stopProcess(ProcName, Mode=None):
 
     # Add the appropriate paramters
     smgrArgs.append("-c")
@@ -170,8 +189,9 @@ def stopProcess(ProcName,Mode=None):
     if result.returncode > 0:
         print(result.stdout.decode("utf-8"))
 
+
 def startProcess(ProcName):
-    print("Starting %s" % ProcName) 
+    print("Starting %s" % ProcName)
 
     # Add the appropriate paramters
     smgrArgs.append("-c")
@@ -183,20 +203,22 @@ def startProcess(ProcName):
     if result.returncode > 0:
         print(result.stdout.decode("utf-8"))
 
+
 def restartProcess(ProcName):
     stopProcess(ProcName)
     time.sleep(2)
     startProcess(ProcName)
 
-def commitAction(a ,p):
+
+def commitAction(a, p):
     if a == "R":
         restartProcess(p)
     elif a == "K":
         stopProcess(p)
     elif a == "KA":
-        stopProcess(p,"A")
+        stopProcess(p, "A")
     elif a == "KS":
-        stopProcess(p,"S")
+        stopProcess(p, "S")
     else:
         startProcess(p)
 
@@ -206,16 +228,18 @@ def validateCommit(inputCommit):
     if inputCommit.upper() == "Y":
         return True
 
+
 def validateNumber(inputNumber, procList):
     while inputNumber not in range(1, len(procList)):
         inputNumber = int(input("Invalid number, try again: "))
-    
+
     return inputNumber
 
+
 def validateAction(inputAction):
-    while inputAction not in ("K","KA","KS","R","S","Q","RE"):
-        inputAction= input("Invalid action, try again ").upper()
-    
+    while inputAction not in ("K", "KA", "KS", "R", "S", "Q", "RE"):
+        inputAction = input("Invalid action, try again ").upper()
+
     return inputAction
 
 
@@ -225,17 +249,17 @@ def validateAction(inputAction):
 
 #Version = getVersion()
 # print(Version)
-while True: 
+while True:
     commit = False
     procList = getProcessList()
 
     print()
-    print("Actions: R - restart, S - start, K - stop" ) 
+    print("Actions: R - restart, S - start, K - stop")
     print("         KA - stop abnormally , KS - shutdown ")
     print("         Q - quit, RE - refresh")
 
     # Timeout after n seconds a.k.a auto-refresh
-    i, o, e = select.select( [sys.stdin], [], [], autorefresh)
+    i, o, e = select.select([sys.stdin], [], [], autorefresh)
 
     if i:
         inputAction = validateAction(sys.stdin.readline().strip().upper())
@@ -247,13 +271,11 @@ while True:
     if inputAction == "RE":
         continue
 
-    inputNumber = validateNumber(int(input("Which process number? ")),procList)
-    
+    inputNumber = validateNumber(
+        int(input("Which process number? ")), procList)
+
     print("Action: %s on %s. " % (inputAction, procList[inputNumber][0]))
     commit = validateCommit(input("Commit Y/N ? "))
 
     if commit:
         commitAction(inputAction, procList[inputNumber][0])
-
-
-        
