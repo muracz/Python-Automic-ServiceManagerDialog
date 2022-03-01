@@ -247,7 +247,7 @@ def validateAction(inputAction):
 #      Main loop
 # ---------------------------------------------------
 
-#Version = getVersion()
+# Version = getVersion()
 # print(Version)
 while True:
     commit = False
