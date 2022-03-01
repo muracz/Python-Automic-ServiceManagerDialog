@@ -113,7 +113,7 @@ def getVersion():
 
     try:
         Version = re.search(
-            '([0-9.-]+)\+', result.stdout.decode("utf-8")).group(1)
+            r'([0-9.-]+)\+', result.stdout.decode("utf-8")).group(1)
         return Version
     except AttributeError:
         print('Error: Could not find version')
