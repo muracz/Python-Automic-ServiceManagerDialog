@@ -84,7 +84,7 @@ def getConfigInput():
 try:
     smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass = getConfigJSON(
         sys.argv[1])
-except:
+except IndexError:
     smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass = getConfigInput()
 
 
@@ -105,11 +105,11 @@ os.environ['LD_LIBRARY_PATH'] = smgrPath.replace("ucybsmcl", "")
 # ---------------------------------------------------
 
 def clrScreen():
-    subprocess.run("clear")
+    subprocess.run("clear", check=True)
 
 
 def getVersion():
-    result = subprocess.run([smgrPath, '-v'], stdout=subprocess.PIPE)
+    result = subprocess.run([smgrPath, '-v'], stdout=subprocess.PIPE, check=True)
 
     try:
         Version = re.search(
@@ -124,7 +124,7 @@ def getProcessList():
     smgrArgs.append("-c")
     smgrArgs.append("GET_PROCESS_LIST")
 
-    result = subprocess.run(smgrArgs, stdout=subprocess.PIPE)
+    result = subprocess.run(smgrArgs, stdout=subprocess.PIPE, check=True)
 
     if result.returncode > 0:
         print(result.stdout.decode("utf-8"))
@@ -199,7 +199,7 @@ def startProcess(ProcName):
     smgrArgs.append("-s")
     smgrArgs.append(ProcName)
 
-    result = subprocess.run(smgrArgs, stdout=subprocess.PIPE)
+    result = subprocess.run(smgrArgs, stdout=subprocess.PIPE, check=True)
     if result.returncode > 0:
         print(result.stdout.decode("utf-8"))
 
