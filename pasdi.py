@@ -185,7 +185,7 @@ def stopProcess(ProcName, Mode=None):
         smgrArgs.append(Mode)
     smgrArgs.append("-s")
     smgrArgs.append(ProcName)
-    result = subprocess.run(smgrArgs, stdout=subprocess.PIPE)
+    result = subprocess.run(smgrArgs, stdout=subprocess.PIPE,check=True)
     if result.returncode > 0:
         print(result.stdout.decode("utf-8"))
 
