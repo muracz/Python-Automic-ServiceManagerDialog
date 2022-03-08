@@ -71,10 +71,8 @@ def getConfigInput():
     smgrPath = input(
         "Path to ucybsmcl. Leave empty to use env variable $AUTOMIC_SMCL:  ") or os.getenv('AUTOMIC_SMCL')
     smgrHost = input("Hostame: ")
-    smgrPort = input("ServiceManager port. Leave empty to use env variable $AUTOMIC_SMPORT:  ") or os.getenv(
-        'AUTOMIC_SMPORT')
-    smgrPhrase = input(
-        "Phrase. Leave empty to use env variable $AUTOMIC_PHRASE:  ") or os.getenv('AUTOMIC_SMCL')
+    smgrPort = input("ServiceManager port. Leave empty to use env variable $AUTOMIC_SMPORT:  ") or os.getenv('AUTOMIC_SMPORT')
+    smgrPhrase = input("Phrase. Leave empty to use env variable $AUTOMIC_PHRASE:  ") or os.getenv('AUTOMIC_SMCL')
     smgrPass = input("Password. Leave empty if no password is configured ")
 
     return smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass
@@ -82,8 +80,7 @@ def getConfigInput():
 
 # Get the config
 try:
-    smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass = getConfigJSON(
-        sys.argv[1])
+    smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass = getConfigJSON(sys.argv[1])
 except IndexError:
     smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass = getConfigInput()
 
@@ -109,7 +106,8 @@ def clrScreen():
 
 
 def getVersion():
-    result = subprocess.run([smgrPath, '-v'], stdout=subprocess.PIPE, check=True)
+    result = subprocess.run(
+        [smgrPath, '-v'], stdout=subprocess.PIPE, check=True)
 
     try:
         Version = re.search(
@@ -188,7 +186,7 @@ def stopProcess(ProcName, Mode=None):
         smgrArgs.append(Mode)
     smgrArgs.append("-s")
     smgrArgs.append(ProcName)
-    result = subprocess.run(smgrArgs, stdout=subprocess.PIPE,check=True)
+    result = subprocess.run(smgrArgs, stdout=subprocess.PIPE, check=True)
     if result.returncode > 0:
         print(result.stdout.decode("utf-8"))
 
