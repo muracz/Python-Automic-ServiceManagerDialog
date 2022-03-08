@@ -170,6 +170,9 @@ def getProcessList():
 
         print("| %2d | %25s | %3s | %10s | %18s | " %
               (c, procName, procStatus, procPID, procTimestamp))
+
+    # Close the table
+    print('-' * 72)
     return procList
 
 
