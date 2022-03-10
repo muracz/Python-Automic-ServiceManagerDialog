@@ -122,11 +122,12 @@ def getProcessList():
     smgrArgs.append("-c")
     smgrArgs.append("GET_PROCESS_LIST")
 
-    result = subprocess.run(smgrArgs, stdout=subprocess.PIPE, check=True)
+    try:
+        result = subprocess.run(smgrArgs, stdout=subprocess.PIPE, check=True)
+    except subprocess.CalledProcessError as e:
+        print(e.output)
+        sys.exit(e.returncode)
 
-    if result.returncode > 0:
-        print(result.stdout.decode("utf-8"))
-        sys.exit(result.returncode)
 
     c = 1
     procList = {}
