@@ -17,6 +17,7 @@ import time
 import json
 import datetime
 import select
+from getpass import getpass
 
 # // TODo
 #  - set_data action for smgr > 12.3
@@ -59,7 +60,7 @@ def getConfigJSON(file):
     smgrHost = config['connections'][connID]['host']
     smgrPhrase = config['connections'][connID]['phrase']
     if config['connections'][connID]['pass']:
-        smgrPass = input("Enter the ServiceManager Pasword: ")
+        smgrPass = getpass("Password: ")
     else:
         smgrPass = ""
 
@@ -73,7 +74,7 @@ def getConfigInput():
     smgrHost = input("Hostame: ")
     smgrPort = input("ServiceManager port. Leave empty to use env variable $AUTOMIC_SMPORT:  ") or os.getenv('AUTOMIC_SMPORT')
     smgrPhrase = input("Phrase. Leave empty to use env variable $AUTOMIC_PHRASE:  ") or os.getenv('AUTOMIC_SMCL')
-    smgrPass = input("Password. Leave empty if no password is configured ")
+    smgrPass = getpass("Password. Leave empty if no password is configured ")
 
     return smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass
 
