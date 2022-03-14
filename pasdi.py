@@ -105,6 +105,14 @@ os.environ['LD_LIBRARY_PATH'] = smgrPath.replace("ucybsmcl", "")
 def clrScreen():
     subprocess.run("clear", check=True)
 
+def runCommand(args):
+    try:
+        res = subprocess.run(smgrArgs, stdout=subprocess.PIPE, check=True)
+    except subprocess.CalledProcessError as e:
+        print(e.output.decode("utf-8"))
+        sys.exit(e.returncode)
+
+    return res
 
 def getVersion():
     result = subprocess.run(
@@ -123,12 +131,7 @@ def getProcessList():
     smgrArgs.append("-c")
     smgrArgs.append("GET_PROCESS_LIST")
 
-    try:
-        result = subprocess.run(smgrArgs, stdout=subprocess.PIPE, check=True)
-    except subprocess.CalledProcessError as e:
-        print(e.output)
-        sys.exit(e.returncode)
-
+    result = runCommand(smgrArgs)
 
     c = 1
     procList = {}
@@ -188,9 +191,8 @@ def stopProcess(ProcName, Mode=None):
         smgrArgs.append(Mode)
     smgrArgs.append("-s")
     smgrArgs.append(ProcName)
-    result = subprocess.run(smgrArgs, stdout=subprocess.PIPE, check=True)
-    if result.returncode > 0:
-        print(result.stdout.decode("utf-8"))
+
+    result = runCommand(smgrArgs)
 
 
 def startProcess(ProcName):
@@ -202,10 +204,7 @@ def startProcess(ProcName):
     smgrArgs.append("-s")
     smgrArgs.append(ProcName)
 
-    result = subprocess.run(smgrArgs, stdout=subprocess.PIPE, check=True)
-    if result.returncode > 0:
-        print(result.stdout.decode("utf-8"))
-
+    result = runCommand(smgrArgs)
 
 def restartProcess(ProcName):
     stopProcess(ProcName)
@@ -261,6 +260,7 @@ while True:
     print("         Q - quit, RE - refresh")
 
     # Timeout after n seconds a.k.a auto-refresh
+    print("Action: ", end="",flush=True)
     i, o, e = select.select([sys.stdin], [], [], autorefresh)
 
     if i:
