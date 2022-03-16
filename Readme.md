@@ -3,6 +3,9 @@
 ![Automic-21](https://img.shields.io/badge/automic-21-orange)  
 
 
+# Sponsor
+ [Philipp Elmer Membership](https://membership.philippelmer.com) 
+
 # Python Automic ServiceManagerDialog
 
 A CLI GUI wrapper for the Automic [ucybsmcl](https://docs.automic.com/documentation/webhelp/english/AA/21.0/DOCU/21.0/Automic%20Automation%20Guides/Content/ServiceManager/ServiceManager_CLI.htm)
@@ -135,3 +138,7 @@ In this mode the script will ask you ( of use env variables ) to establish the c
 
 * 1.0
     * Initial Release
+
+
+## Liability
+The product is shipped as is. No warranty or liability is assumed for the use of this solution.
