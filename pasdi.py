@@ -73,7 +73,7 @@ def getConfigInput():
         "Path to ucybsmcl. Leave empty to use env variable $AUTOMIC_SMCL:  ") or os.getenv('AUTOMIC_SMCL')
     smgrHost = input("Hostame: ")
     smgrPort = input("ServiceManager port. Leave empty to use env variable $AUTOMIC_SMPORT:  ") or os.getenv('AUTOMIC_SMPORT')
-    smgrPhrase = input("Phrase. Leave empty to use env variable $AUTOMIC_PHRASE:  ") or os.getenv('AUTOMIC_SMCL')
+    smgrPhrase = input("Phrase. Leave empty to use env variable $AUTOMIC_PHRASE:  ") or os.getenv('AUTOMIC_PHRASE')
     smgrPass = getpass("Password. Leave empty if no password is configured ")
 
     return smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass
