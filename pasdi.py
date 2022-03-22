@@ -253,34 +253,37 @@ def validateAction(inputAction):
 
 # Version = getVersion()
 # print(Version)
-while True:
-    commit = False
-    procList = getProcessList()
+try: 
+    while True:
+        commit = False
+        procList = getProcessList()
 
-    print()
-    print("Actions: R - restart, S - start, K - stop")
-    print("         KA - stop abnormally , KS - shutdown ")
-    print("         Q - quit, RE - refresh")
+        print()
+        print("Actions: R - restart, S - start, K - stop")
+        print("         KA - stop abnormally , KS - shutdown ")
+        print("         Q - quit, RE - refresh")
 
-    # Timeout after n seconds a.k.a auto-refresh
-    print("Action: ", end="",flush=True)
-    i, o, e = select.select([sys.stdin], [], [], autorefresh)
+        # Timeout after n seconds a.k.a auto-refresh
+        print("Action: ", end="",flush=True)
+        i, o, e = select.select([sys.stdin], [], [], autorefresh)
 
-    if i:
-        inputAction = validateAction(sys.stdin.readline().strip().upper())
-    else:
-        continue
+        if i:
+            inputAction = validateAction(sys.stdin.readline().strip().upper())
+        else:
+            continue
 
-    if inputAction == "Q":
-        break
-    if inputAction == "RE":
-        continue
+        if inputAction == "Q":
+            break
+        if inputAction == "RE":
+            continue
 
-    inputNumber = validateNumber(
-        int(input("Which process number? ")), procList)
+        inputNumber = validateNumber(
+            int(input("Which process number? ")), procList)
 
-    print("Action: %s on %s. " % (inputAction, procList[inputNumber][0]))
-    commit = validateCommit(input("Commit Y/N ? "))
+        print("Action: %s on %s. " % (inputAction, procList[inputNumber][0]))
+        commit = validateCommit(input("Commit Y/N ? "))
 
-    if commit:
-        commitAction(inputAction, procList[inputNumber][0])
+        if commit:
+            commitAction(inputAction, procList[inputNumber][0])
+except KeyboardInterrupt:
+    sys.exit()
