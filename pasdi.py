@@ -83,7 +83,10 @@ def getConfigInput():
 try:
     smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass = getConfigJSON(sys.argv[1])
 except IndexError:
-    smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass = getConfigInput()
+    try:
+        smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass = getConfigInput()
+    except KeyboardInterrupt:
+        sys.exit()
 
 
 # We need the port always when set so why do it over and over again
