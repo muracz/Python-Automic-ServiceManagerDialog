@@ -86,6 +86,7 @@ except IndexError:
     try:
         smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass = getConfigInput()
     except KeyboardInterrupt:
+        print("Bye!")
         sys.exit()
 
 
@@ -286,4 +287,5 @@ try:
         if commit:
             commitAction(inputAction, procList[inputNumber][0])
 except KeyboardInterrupt:
+    print("Bye!")
     sys.exit()
