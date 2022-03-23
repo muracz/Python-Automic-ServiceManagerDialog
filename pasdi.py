@@ -38,10 +38,9 @@ autorefresh = 10
 
 
 def getConfigJSON(file):
+   with open(file) as f: 
     # Read the config file
-    f = open(file)
     config = json.load(f)
-    f.close()
 
     if len(config['connections']) > 1:
         c = 0
