@@ -88,10 +88,13 @@ except IndexError:
         print("Bye!")
         sys.exit()
 
-
 # We need the port always when set so why do it over and over again
-if smgrPort is not None:
+# Plus Last check
+if all([smgrPath,smgrPort,smgrHost,smgrPhrase]):
     smgrHost = smgrHost + ":" + smgrPort
+else:
+    print("Not all parameters set")
+    sys.exit(1)
 
 # Build Preliminary argList
 smgrArgs = [smgrPath, '-h', smgrHost, '-n', smgrPhrase, '-p', smgrPass]
@@ -114,6 +117,9 @@ def runCommand(args):
     except subprocess.CalledProcessError as e:
         print(e.output.decode("utf-8"))
         sys.exit(e.returncode)
+    except FileNotFoundError:
+        print("Wrong ucybsmcl path provided")
+        sys.exit(1)
 
     return res
 
