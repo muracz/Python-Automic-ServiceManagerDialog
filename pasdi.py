@@ -240,7 +240,7 @@ def validateCommit(inputCommit):
 
 
 def validateNumber(inputNumber, procList):
-    while inputNumber not in range(1, len(procList)):
+    while inputNumber not in range(1, len(procList)+1):
         inputNumber = int(input("Invalid number, try again: "))
 
     return inputNumber
