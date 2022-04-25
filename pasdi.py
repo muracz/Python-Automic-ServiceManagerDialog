@@ -146,7 +146,7 @@ def getProcessList():
     procList = {}
     # Populate the dict
     for line in result.stdout.decode("utf-8").splitlines():
-        procList[c] = line.replace("\"", "").split(" ")
+        procList[c] = list(filter(None,map(str.strip, line.split("\""))))
         c += 1
 
     # Header
@@ -170,7 +170,7 @@ def getProcessList():
             procPID = ''
 
         try:
-            procTimestamp = procList[c][3] + " - " + procList[c][4]
+            procTimestamp = procList[c][3] 
         except IndexError:
             procTimestamp = ''
 
