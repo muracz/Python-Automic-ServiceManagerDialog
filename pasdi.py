@@ -96,10 +96,6 @@ else:
     print("Not all parameters set")
     sys.exit(1)
 
-# Build Preliminary argList
-smgrArgs = [smgrPath, '-h', smgrHost, '-n', smgrPhrase, '-p', smgrPass]
-
-
 # Prepare env
 os.environ['LD_LIBRARY_PATH'] = smgrPath.replace("ucybsmcl", "")
 
@@ -107,13 +103,21 @@ os.environ['LD_LIBRARY_PATH'] = smgrPath.replace("ucybsmcl", "")
 # ---------------------------------------------------
 #      Supporting functions
 # ---------------------------------------------------
+def initArgs():
+    # Build Preliminary argList
+    smgrArgs = [smgrPath, '-h', smgrHost, '-n', smgrPhrase, '-p', smgrPass]
+
+    return smgrArgs
+
+
 
 def clrScreen():
     subprocess.run("clear", check=True)
 
 def runCommand(args):
+
     try:
-        res = subprocess.run(smgrArgs, stdout=subprocess.PIPE, check=True)
+        res = subprocess.run(args, stdout=subprocess.PIPE, check=True)
     except subprocess.CalledProcessError as e:
         print(e.output.decode("utf-8"))
         sys.exit(e.returncode)
@@ -137,6 +141,7 @@ def getVersion():
 
 
 def getProcessList():
+    smgrArgs = initArgs()
     smgrArgs.append("-c")
     smgrArgs.append("GET_PROCESS_LIST")
 
@@ -189,6 +194,7 @@ def getProcessList():
 
 
 def stopProcess(ProcName, Mode=None):
+    smgrArgs = initArgs()
 
     # Add the appropriate paramters
     smgrArgs.append("-c")
@@ -205,6 +211,7 @@ def stopProcess(ProcName, Mode=None):
 
 
 def startProcess(ProcName):
+    smgrArgs = initArgs()
     print("Starting %s" % ProcName)
 
     # Add the appropriate paramters
@@ -220,8 +227,34 @@ def restartProcess(ProcName):
     time.sleep(2)
     startProcess(ProcName)
 
+def modifyProcess(ProcName, Mode=None, Data=None):
+    smgrArgs = initArgs()
 
-def commitAction(a, p):
+    print("Modifying %s" % ProcName)
+
+    # Add the appropriate paramters
+    smgrArgs.append("-c")
+    smgrArgs.append("SET_DATA")
+    smgrArgs.append("-s")
+    smgrArgs.append(ProcName)
+    smgrArgs.append("-d")
+    if Mode == "A":
+        smgrArgs.append("Autostart")
+        smgrArgs.append("1")
+    elif Mode == "O":
+        smgrArgs.append("Autostart")
+        smgrArgs.append("0")
+    elif Mode == "C":
+        smgrArgs.append("Command")
+        smgrArgs.append(Data)
+    elif Mode == "P":
+        smgrArgs.append("StartPath")
+        smgrArgs.append(Data)
+
+    
+    result = runCommand(smgrArgs)
+
+def commitAction(a, p, d):
     if a == "R":
         restartProcess(p)
     elif a == "K":
@@ -230,6 +263,9 @@ def commitAction(a, p):
         stopProcess(p, "A")
     elif a == "KS":
         stopProcess(p, "S")
+    elif a.startswith("M") and len(a) == 2:
+        m = a[1]
+        modifyProcess(p, m , d)
     else:
         startProcess(p)
 
@@ -247,7 +283,7 @@ def validateNumber(inputNumber, procList):
 
 
 def validateAction(inputAction):
-    valid_actions = ("K", "KA", "KS", "R", "S", "Q", "RE")
+    valid_actions = ("K", "KA", "KS", "R", "S", "Q", "RE","MC","MP","MA","MO")
     pattern = r"^(" + "|".join(valid_actions) + r")(\d+)?$"
 
     while not re.match(pattern, inputAction):
@@ -279,7 +315,14 @@ try:
         print()
         print("Actions: R - restart, S - start, K - stop")
         print("         KA - stop abnormally , KS - shutdown ")
+        print("         MC - modify command, MP - modify start path")
+        print("         MA - autostart on, MO- autostart off")
         print("         Q - quit, RE - refresh")
+        
+
+
+        ## Additional Command M{X}-> modify property 
+        ## Additional input to change P - path, C - command, A - active, I - inactive 
 
         # Timeout after n seconds a.k.a auto-refresh
         print("Action: ", end="",flush=True)
@@ -301,11 +344,19 @@ try:
         else:
                 inputNumber = validateNumber(inputNumber, procList)
 
+        if inputAction == "MC":
+            inputData = input("Provide new command: ")
+        elif inputAction == "MP":
+            inputData = input("Provide new path: ")
+        else:
+            inputData = None
+
+
         print("Action: %s on %s. " % (inputAction, procList[inputNumber][0]))
         commit = validateCommit(input("Commit Y/N ? "))
 
         if commit:
-            commitAction(inputAction, procList[inputNumber][0])
+            commitAction(inputAction, procList[inputNumber][0],inputData)
 except KeyboardInterrupt:
     print("Bye!")
     sys.exit()
