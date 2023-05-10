@@ -247,11 +247,23 @@ def validateNumber(inputNumber, procList):
 
 
 def validateAction(inputAction):
-    while inputAction not in ("K", "KA", "KS", "R", "S", "Q", "RE"):
-        inputAction = input("Invalid action, try again ").upper()
+    valid_actions = ("K", "KA", "KS", "R", "S", "Q", "RE")
+    pattern = r"^(" + "|".join(valid_actions) + r")(\d+)?$"
 
-    return inputAction
+    while not re.match(pattern, inputAction):
+        inputAction = input("Invalid action, try again: ").upper()
 
+    # Split the input into the action and the digits (if any)
+    match = re.match(pattern, inputAction)
+    action = match.group(1)
+    digits = match.group(2)
+
+    # Convert the digits to an integer (if any)
+    if digits is not None:
+        digits = int(digits)
+
+    # Return the action and the digits as a tuple
+    return action, digits
 
 # ---------------------------------------------------
 #      Main loop
@@ -274,7 +286,7 @@ try:
         i, o, e = select.select([sys.stdin], [], [], autorefresh)
 
         if i:
-            inputAction = validateAction(sys.stdin.readline().strip().upper())
+            inputAction, inputNumber  = validateAction(sys.stdin.readline().strip().upper())
         else:
             continue
 
@@ -283,8 +295,11 @@ try:
         if inputAction == "RE":
             continue
 
-        inputNumber = validateNumber(
-            int(input("Which process number? ")), procList)
+        if inputNumber is None:
+            inputNumber = validateNumber(
+                int(input("Which process number? ")), procList)
+        else:
+                inputNumber = validateNumber(inputNumber, procList)
 
         print("Action: %s on %s. " % (inputAction, procList[inputNumber][0]))
         commit = validateCommit(input("Commit Y/N ? "))
