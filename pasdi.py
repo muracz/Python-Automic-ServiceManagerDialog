@@ -19,9 +19,6 @@ import datetime
 import select
 from getpass import getpass
 
-# // TODo
-#  - set_data action for smgr > 12.3
-
 
 #  Constants / config
 
