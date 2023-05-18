@@ -350,7 +350,7 @@ try:
 
 
         print("Action: %s on %s. " % (inputAction, procList[inputNumber][0]))
-        commit = validateCommit(input("Commit Y/N ? "))
+        commit = validateCommit(input("Commit Y/N ? [Y] ") or "Y")
 
         if commit:
             commitAction(inputAction, procList[inputNumber][0],inputData)
