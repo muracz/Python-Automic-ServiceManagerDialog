@@ -56,7 +56,7 @@ This is an attempt to make the interaction with ServiceManager on Unix / command
 ### Dependencies
 
 * Python3 with standard libraries, no external dependecies used
-* Any modern version of ucybsmcl
+* Any modern version of ucybsmcl (12.3 +)
 
 ### Installing
 
@@ -70,11 +70,12 @@ This is an attempt to make the interaction with ServiceManager on Unix / command
 * Restarting service
 * Shutdown Automic System
 * Stop abnormally
+* Turn autostart on/off
+* Change start path and command
 
 ### Still pending / To Do
 
 * Support for certificates for authorisation
-* Support for SET_DATA command in ucybsmcl
 
 ### Usage
 
@@ -138,7 +139,12 @@ In this mode the script will ask you ( of use env variables ) to establish the c
 
 * 1.0
     * Initial Release
-
+* 2.0
+  * Added support for shortcuts - you can type R12 as action to restart process number 12
+  * Added support for set_data for:
+    * Autostart
+    * Change start path
+    * Change command
 
 ## Liability
 
