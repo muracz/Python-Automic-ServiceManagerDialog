@@ -279,24 +279,50 @@ def validateNumber(inputNumber, procList):
     return inputNumber
 
 
+def validateNumbers(input_str, procList):
+    numbers = []
+    ranges = input_str.split(',')
+    for r in ranges:
+        if '-' in r:
+            start, end = map(int, r.split('-'))
+            numbers.extend(range(start, end + 1))
+        else:
+            numbers.append(int(r))
+    return [n for n in numbers if n in range(1, len(procList) + 1)]
+
+
 def validateAction(inputAction):
-    valid_actions = ("K", "KA", "KS", "R", "S", "Q", "RE","MC","MP","MA","MO")
-    pattern = r"^(" + "|".join(valid_actions) + r")(\d+)?$"
+    """Validate action and parse any numbers included in the command"""
+    # Define bulk and single actions separately
+    bulk_actions = ("K", "KA", "R", "S", "MA", "MO")
+    single_actions = ("KS", "Q", "RE", "MC", "MP")
+    valid_actions = bulk_actions + single_actions
+    
+    # Match action followed by optional numbers only for bulk actions
+    pattern = r"^(" + "|".join(valid_actions) + r")([\d,\-\s]+)?$"
 
     while not re.match(pattern, inputAction):
         inputAction = input("Invalid action, try again: ").upper()
 
-    # Split the input into the action and the digits (if any)
+    # Split the input into the action and the number part
     match = re.match(pattern, inputAction)
     action = match.group(1)
-    digits = match.group(2)
+    number_part = match.group(2)
 
-    # Convert the digits to an integer (if any)
-    if digits is not None:
-        digits = int(digits)
+    # Return just action for non-numeric commands
+    if action in ("Q", "RE"):
+        return action, None
 
-    # Return the action and the digits as a tuple
-    return action, digits
+    # Validate that numbers are only provided for bulk actions
+    if number_part and action not in bulk_actions:
+        print(f"Action {action} cannot be used with multiple processes")
+        return action, None
+
+    # If numbers provided for bulk actions, return them for processing
+    if number_part and action in bulk_actions:
+        return action, number_part.strip()
+    
+    return action, None
 
 # ---------------------------------------------------
 #      Main loop
@@ -326,7 +352,7 @@ try:
         i, o, e = select.select([sys.stdin], [], [], autorefresh)
 
         if i:
-            inputAction, inputNumber  = validateAction(sys.stdin.readline().strip().upper())
+            inputAction, numberPart = validateAction(sys.stdin.readline().strip().upper())
         else:
             continue
 
@@ -335,11 +361,21 @@ try:
         if inputAction == "RE":
             continue
 
-        if inputNumber is None:
-            inputNumber = validateNumber(
-                int(input("Which process number? ")), procList)
+        # Process numbers if provided in command or ask for input
+        if numberPart:
+            numbers = validateNumbers(numberPart, procList)
+            if not numbers:
+                print("No valid process numbers provided")
+                continue
         else:
-                inputNumber = validateNumber(inputNumber, procList)
+            if inputAction in ("R", "S", "K", "KA", "MA", "MO"):
+                input_str = input("Which process number(s)? (e.g. 1,2,3 or 1-5): ")
+                numbers = validateNumbers(input_str, procList)
+                if not numbers:
+                    print("No valid process numbers provided")
+                    continue
+            else:
+                numbers = [validateNumber(int(input("Which process number? ")), procList)]
 
         if inputAction == "MC":
             inputData = input("Provide new command: ")
@@ -348,12 +384,17 @@ try:
         else:
             inputData = None
 
-
-        print("Action: %s on %s. " % (inputAction, procList[inputNumber][0]))
-        commit = validateCommit(input("Commit Y/N ? [Y] ") or "Y")
+        # Show confirmation for all processes
+        print("\nSelected processes:")
+        for num in numbers:
+            print(f"- {procList[num][0]}")
+        
+        commit = validateCommit(input(f"\nExecute {inputAction} on these processes? Y/N [Y] ") or "Y")
 
         if commit:
-            commitAction(inputAction, procList[inputNumber][0],inputData)
+            for num in numbers:
+                print(f"Processing {procList[num][0]}...")
+                commitAction(inputAction, procList[num][0], inputData)
 except KeyboardInterrupt:
     print("Bye!")
     sys.exit()
