@@ -17,6 +17,7 @@ import time
 import json
 import datetime
 import select
+import termios
 from getpass import getpass
 
 
@@ -32,12 +33,17 @@ class bcolors:
 
 # Autorefresh interval in seconds
 autorefresh = 10
+use_autorefresh = os.getenv("AUTOMIC_AUTOREFRESH", "1") not in ("0", "false", "False")
 
 
 def getConfigJSON(file):
    with open(file) as f: 
     # Read the config file
     config = json.load(f)
+
+    if 'connections' not in config or not isinstance(config['connections'], list) or not config['connections']:
+        print("Config file is missing a valid 'connections' list")
+        sys.exit(1)
 
     if len(config['connections']) > 1:
         c = 0
@@ -46,41 +52,74 @@ def getConfigJSON(file):
             print("%2d - %s" % (c, conn['name']))
             c += 1
 
-        connID = input("Choose the config: ")
-        connID = int(connID)
+        while True:
+            try:
+                connID = int(input("Choose the config: "))
+            except ValueError:
+                print("Invalid number, try again.")
+                continue
+            if 0 <= connID < len(config['connections']):
+                break
+            print("Config out of range, try again.")
     else:
         connID = 0
 
-    smgrPath = config['connections'][connID]['smgrclPath']
-    smgrPort = config['connections'][connID]['port']
-    smgrHost = config['connections'][connID]['host']
-    smgrPhrase = config['connections'][connID]['phrase']
-    if config['connections'][connID]['pass']:
+    conn = config['connections'][connID]
+    required_keys = ("smgrclPath", "port", "host", "phrase", "pass")
+    missing = [k for k in required_keys if k not in conn]
+    if missing:
+        print("Config entry is missing keys: " + ", ".join(missing))
+        sys.exit(1)
+
+    smgrPath = conn['smgrclPath']
+    smgrPort = conn['port']
+    smgrHost = conn['host']
+    smgrPhrase = conn['phrase']
+    smgrCert = conn.get('certificate')
+    smgrKey = conn.get('key')
+    smgrChain = conn.get('chain')
+    if conn['pass']:
         smgrPass = getpass("Password: ")
     else:
         smgrPass = ""
 
-    return smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass
+    return smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass, smgrCert, smgrKey, smgrChain
 
 
 def getConfigInput():
 
     smgrPath = input(
         "Path to ucybsmcl. Leave empty to use env variable $AUTOMIC_SMCL:  ") or os.getenv('AUTOMIC_SMCL')
-    smgrHost = input("Hostame: ")
+    smgrHost = input("Hostname: ")
     smgrPort = input("ServiceManager port. Leave empty to use env variable $AUTOMIC_SMPORT:  ") or os.getenv('AUTOMIC_SMPORT')
     smgrPhrase = input("Phrase. Leave empty to use env variable $AUTOMIC_PHRASE:  ") or os.getenv('AUTOMIC_PHRASE')
     smgrPass = getpass("Password. Leave empty if no password is configured ")
+    smgrCert = os.getenv('AUTOMIC_SMCERT')
+    smgrKey = os.getenv('AUTOMIC_SMKEY')
+    smgrChain = os.getenv('AUTOMIC_SMCHAIN')
 
-    return smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass
+    missing = []
+    if not smgrPath:
+        missing.append("AUTOMIC_SMCL / ucybsmcl path")
+    if not smgrHost:
+        missing.append("host")
+    if not smgrPort:
+        missing.append("AUTOMIC_SMPORT / port")
+    if not smgrPhrase:
+        missing.append("AUTOMIC_PHRASE / phrase")
+    if missing:
+        print("Missing required values: " + ", ".join(missing))
+        sys.exit(1)
+
+    return smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass, smgrCert, smgrKey, smgrChain
 
 
 # Get the config
 try:
-    smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass = getConfigJSON(sys.argv[1])
+    smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass, smgrCert, smgrKey, smgrChain = getConfigJSON(sys.argv[1])
 except IndexError:
     try:
-        smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass = getConfigInput()
+        smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass, smgrCert, smgrKey, smgrChain = getConfigInput()
     except KeyboardInterrupt:
         print("Bye!")
         sys.exit()
@@ -88,13 +127,22 @@ except IndexError:
 # We need the port always when set so why do it over and over again
 # Plus Last check
 if all([smgrPath,smgrPort,smgrHost,smgrPhrase]):
+    if not os.path.isfile(smgrPath) or not os.access(smgrPath, os.X_OK):
+        print("Invalid ucybsmcl path: file not found or not executable")
+        sys.exit(1)
+    if not str(smgrPort).isdigit():
+        print("Invalid port: must be numeric")
+        sys.exit(1)
+    if (smgrCert or smgrKey or smgrChain) and not (smgrCert and smgrKey):
+        print("Certificate auth requires both certificate and key files")
+        sys.exit(1)
     smgrHost = smgrHost + ":" + smgrPort
 else:
     print("Not all parameters set")
     sys.exit(1)
 
 # Prepare env
-os.environ['LD_LIBRARY_PATH'] = smgrPath.replace("ucybsmcl", "")
+os.environ['LD_LIBRARY_PATH'] = os.path.dirname(smgrPath)
 
 
 # ---------------------------------------------------
@@ -103,20 +151,35 @@ os.environ['LD_LIBRARY_PATH'] = smgrPath.replace("ucybsmcl", "")
 def initArgs():
     # Build Preliminary argList
     smgrArgs = [smgrPath, '-h', smgrHost, '-n', smgrPhrase, '-p', smgrPass]
+    if smgrCert:
+        smgrArgs.extend(['-certificate', smgrCert])
+    if smgrKey:
+        smgrArgs.extend(['-key', smgrKey])
+    if smgrChain:
+        smgrArgs.extend(['-chain', smgrChain])
 
     return smgrArgs
 
 
 
 def clrScreen():
-    subprocess.run("clear", check=True)
+    print("\033[2J\033[H", end="")
 
 def runCommand(args):
 
     try:
-        res = subprocess.run(args, stdout=subprocess.PIPE, check=True)
+        res = subprocess.run(
+            args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True,
+        )
     except subprocess.CalledProcessError as e:
-        print(e.output.decode("utf-8"))
+        print("Command failed.")
+        if e.stdout:
+            print(e.stdout.decode("utf-8"))
+        if e.stderr:
+            print(e.stderr.decode("utf-8"))
         sys.exit(e.returncode)
     except FileNotFoundError:
         print("Wrong ucybsmcl path provided")
@@ -124,14 +187,64 @@ def runCommand(args):
 
     return res
 
+def read_action_with_autorefresh(timeout):
+    if not sys.stdin.isatty():
+        i, o, e = select.select([sys.stdin], [], [], timeout)
+        if i:
+            return sys.stdin.readline()
+        return None
+
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
+    new_settings = termios.tcgetattr(fd)
+    new_settings[3] &= ~(termios.ICANON | termios.ECHO)
+    new_settings[6][termios.VMIN] = 1
+    new_settings[6][termios.VTIME] = 0
+    termios.tcsetattr(fd, termios.TCSADRAIN, new_settings)
+
+    try:
+        r, o, e = select.select([sys.stdin], [], [], timeout)
+        if not r:
+            return None
+
+        buf = []
+        while True:
+            try:
+                ch = os.read(fd, 1)
+            except KeyboardInterrupt:
+                raise
+            if not ch:
+                continue
+            ch = ch.decode(errors="ignore")
+            if ch in ("\n", "\r"):
+                sys.stdout.write("\n")
+                sys.stdout.flush()
+                break
+            if ch in ("\x7f", "\b"):
+                if buf:
+                    buf.pop()
+                    sys.stdout.write("\b \b")
+                    sys.stdout.flush()
+                continue
+            buf.append(ch)
+            sys.stdout.write(ch)
+            sys.stdout.flush()
+        return "".join(buf)
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+
 def getVersion():
     result = subprocess.run(
         [smgrPath, '-v'], stdout=subprocess.PIPE, check=True)
 
     try:
-        Version = re.search(
-            r'([0-9.-]+)\+', result.stdout.decode("utf-8")).group(1)
-        return Version
+        output = result.stdout.decode("utf-8").strip()
+        match = re.search(r'([0-9][0-9.-]+)\+?', output)
+        if match:
+            return match.group(1)
+        if output:
+            return output.split()[0]
+        return None
     except AttributeError:
         print('Error: Could not find version')
         return None
@@ -148,6 +261,8 @@ def getProcessList():
     procList = {}
     # Populate the dict
     for line in result.stdout.decode("utf-8").splitlines():
+        if not line.strip():
+            continue
         procList[c] = list(filter(None,map(str.strip, line.split("\""))))
         c += 1
 
@@ -201,8 +316,6 @@ def stopProcess(ProcName, Mode=None):
     if Mode is not None:
         smgrArgs.append("-m")
         smgrArgs.append(Mode)
-    smgrArgs.append("-s")
-    smgrArgs.append(ProcName)
 
     result = runCommand(smgrArgs)
 
@@ -263,8 +376,10 @@ def commitAction(a, p, d):
     elif a.startswith("M") and len(a) == 2:
         m = a[1]
         modifyProcess(p, m , d)
-    else:
+    elif a == "S":
         startProcess(p)
+    else:
+        print(f"Unknown action: {a}")
 
 
 # Validation functions
@@ -274,7 +389,10 @@ def validateCommit(inputCommit):
 
 def validateNumber(inputNumber, procList):
     while inputNumber not in range(1, len(procList)+1):
-        inputNumber = int(input("Invalid number, try again: "))
+        try:
+            inputNumber = int(input(f"Invalid number (1-{len(procList)}), try again: "))
+        except ValueError:
+            continue
 
     return inputNumber
 
@@ -283,12 +401,26 @@ def validateNumbers(input_str, procList):
     numbers = []
     ranges = input_str.split(',')
     for r in ranges:
+        r = r.strip()
+        if not r:
+            continue
         if '-' in r:
-            start, end = map(int, r.split('-'))
+            try:
+                start, end = map(int, r.split('-', 1))
+            except ValueError:
+                continue
+            if start > end:
+                start, end = end, start
             numbers.extend(range(start, end + 1))
         else:
-            numbers.append(int(r))
-    return [n for n in numbers if n in range(1, len(procList) + 1)]
+            try:
+                numbers.append(int(r))
+            except ValueError:
+                continue
+    valid = [n for n in numbers if n in range(1, len(procList) + 1)]
+    if not valid and input_str.strip():
+        print("No valid numbers detected.")
+    return sorted(set(valid))
 
 
 def validateAction(inputAction):
@@ -300,14 +432,20 @@ def validateAction(inputAction):
     
     # Match action followed by optional numbers only for bulk actions
     pattern = r"^(" + "|".join(valid_actions) + r")([\d,\-\s]+)?$"
+    numbers_pattern = r"^\s*\d+\s*(?:-\s*\d+\s*)?(?:,\s*\d+\s*(?:-\s*\d+\s*)?)*\s*$"
 
-    while not re.match(pattern, inputAction):
-        inputAction = input("Invalid action, try again: ").upper()
-
-    # Split the input into the action and the number part
-    match = re.match(pattern, inputAction)
-    action = match.group(1)
-    number_part = match.group(2)
+    while True:
+        match = re.match(pattern, inputAction)
+        if not match:
+            inputAction = input("Invalid action, try again: ").upper()
+            continue
+        action = match.group(1)
+        number_part = match.group(2)
+        if number_part and action in bulk_actions:
+            if not re.match(numbers_pattern, number_part):
+                inputAction = input("Invalid numbers, try again: ").upper()
+                continue
+        break
 
     # Return just action for non-numeric commands
     if action in ("Q", "RE"):
@@ -349,12 +487,13 @@ try:
 
         # Timeout after n seconds a.k.a auto-refresh
         print("Action: ", end="",flush=True)
-        i, o, e = select.select([sys.stdin], [], [], autorefresh)
-
-        if i:
-            inputAction, numberPart = validateAction(sys.stdin.readline().strip().upper())
+        if use_autorefresh:
+            line = read_action_with_autorefresh(autorefresh)
+            if line is None:
+                continue
+            inputAction, numberPart = validateAction(line.strip().upper())
         else:
-            continue
+            inputAction, numberPart = validateAction(input().strip().upper())
 
         if inputAction == "Q":
             break
