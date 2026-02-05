@@ -1,6 +1,7 @@
 ![Python](https://img.shields.io/badge/python-3-blue) &nbsp;  &nbsp;
 ![Automic-12.3](https://img.shields.io/badge/automic-12.3-orange) &nbsp;  &nbsp;
-![Automic-21](https://img.shields.io/badge/automic-21-orange)  
+![Automic-21](https://img.shields.io/badge/automic-21-orange)   &nbsp;  &nbsp;
+![Automic-21](https://img.shields.io/badge/automic-24-orange)  
 
 
 # Sponsor
