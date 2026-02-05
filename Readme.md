@@ -76,7 +76,7 @@ This is an attempt to make the interaction with ServiceManager on Unix / command
 
 ### Still pending / To Do
 
-* Support for certificates for authorisation
+* x
 
 ### Usage
 
