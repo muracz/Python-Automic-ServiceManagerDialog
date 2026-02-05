@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # Automic Service Manager Wrapper
 # Created by Marcin Uracz
 # Github: https://github.com/muracz/Python-Automic-ServiceManagerDialog
@@ -6,29 +6,28 @@
 # Usage:
 # 1. Interactive mode (no parameters necessary)
 # 2. With configuration - parameter 1 path to a json config file
-#
 
-
-import os
-import sys
-import subprocess
-import re
-import time
-import json
 import datetime
+import getpass
+import json
+import os
+import re
 import select
+import subprocess
+import sys
 import termios
-from getpass import getpass
+import time
 
 
-#  Constants / config
+# Constants / config
+
 
 # Let's have some colours
 class bcolors:
-    OK = '\033[92m'  # GREEN
-    WARNING = '\033[93m'  # YELLOW
-    FAIL = '\033[91m'  # RED
-    RESET = '\033[0m'  # RESET COLOR
+    OK = "\033[92m"  # GREEN
+    WARNING = "\033[93m"  # YELLOW
+    FAIL = "\033[91m"  # RED
+    RESET = "\033[0m"  # RESET COLOR
 
 
 # Autorefresh interval in seconds
@@ -37,19 +36,22 @@ use_autorefresh = os.getenv("AUTOMIC_AUTOREFRESH", "1") not in ("0", "false", "F
 
 
 def getConfigJSON(file):
-   with open(file) as f: 
-    # Read the config file
-    config = json.load(f)
+    with open(file) as f:
+        config = json.load(f)
 
-    if 'connections' not in config or not isinstance(config['connections'], list) or not config['connections']:
+    if (
+        "connections" not in config
+        or not isinstance(config["connections"], list)
+        or not config["connections"]
+    ):
         print("Config file is missing a valid 'connections' list")
         sys.exit(1)
 
-    if len(config['connections']) > 1:
+    if len(config["connections"]) > 1:
         c = 0
         print("Available configurations")
-        for conn in config['connections']:
-            print("%2d - %s" % (c, conn['name']))
+        for conn in config["connections"]:
+            print("%2d - %s" % (c, conn["name"]))
             c += 1
 
         while True:
@@ -58,45 +60,61 @@ def getConfigJSON(file):
             except ValueError:
                 print("Invalid number, try again.")
                 continue
-            if 0 <= connID < len(config['connections']):
+            if 0 <= connID < len(config["connections"]):
                 break
             print("Config out of range, try again.")
     else:
         connID = 0
 
-    conn = config['connections'][connID]
+    conn = config["connections"][connID]
     required_keys = ("smgrclPath", "port", "host", "phrase", "pass")
     missing = [k for k in required_keys if k not in conn]
     if missing:
         print("Config entry is missing keys: " + ", ".join(missing))
         sys.exit(1)
 
-    smgrPath = conn['smgrclPath']
-    smgrPort = conn['port']
-    smgrHost = conn['host']
-    smgrPhrase = conn['phrase']
-    smgrCert = conn.get('certificate')
-    smgrKey = conn.get('key')
-    smgrChain = conn.get('chain')
-    if conn['pass']:
-        smgrPass = getpass("Password: ")
+    smgrPath = conn["smgrclPath"]
+    smgrPort = conn["port"]
+    smgrHost = conn["host"]
+    smgrPhrase = conn["phrase"]
+    smgrCert = conn.get("certificate")
+    smgrKey = conn.get("key")
+    smgrChain = conn.get("chain")
+    if conn["pass"]:
+        smgrPass = getpass.getpass("Password: ")
     else:
         smgrPass = ""
 
-    return smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass, smgrCert, smgrKey, smgrChain
+    return (
+        smgrPath,
+        smgrPort,
+        smgrHost,
+        smgrPhrase,
+        smgrPass,
+        smgrCert,
+        smgrKey,
+        smgrChain,
+    )
 
 
 def getConfigInput():
-
-    smgrPath = input(
-        "Path to ucybsmcl. Leave empty to use env variable $AUTOMIC_SMCL:  ") or os.getenv('AUTOMIC_SMCL')
+    smgrPath = (
+        input("Path to ucybsmcl. Leave empty to use env variable $AUTOMIC_SMCL:  ")
+        or os.getenv("AUTOMIC_SMCL")
+    )
     smgrHost = input("Hostname: ")
-    smgrPort = input("ServiceManager port. Leave empty to use env variable $AUTOMIC_SMPORT:  ") or os.getenv('AUTOMIC_SMPORT')
-    smgrPhrase = input("Phrase. Leave empty to use env variable $AUTOMIC_PHRASE:  ") or os.getenv('AUTOMIC_PHRASE')
-    smgrPass = getpass("Password. Leave empty if no password is configured ")
-    smgrCert = os.getenv('AUTOMIC_SMCERT')
-    smgrKey = os.getenv('AUTOMIC_SMKEY')
-    smgrChain = os.getenv('AUTOMIC_SMCHAIN')
+    smgrPort = (
+        input("ServiceManager port. Leave empty to use env variable $AUTOMIC_SMPORT:  ")
+        or os.getenv("AUTOMIC_SMPORT")
+    )
+    smgrPhrase = (
+        input("Phrase. Leave empty to use env variable $AUTOMIC_PHRASE:  ")
+        or os.getenv("AUTOMIC_PHRASE")
+    )
+    smgrPass = getpass.getpass("Password. Leave empty if no password is configured ")
+    smgrCert = os.getenv("AUTOMIC_SMCERT")
+    smgrKey = os.getenv("AUTOMIC_SMKEY")
+    smgrChain = os.getenv("AUTOMIC_SMCHAIN")
 
     missing = []
     if not smgrPath:
@@ -111,22 +129,50 @@ def getConfigInput():
         print("Missing required values: " + ", ".join(missing))
         sys.exit(1)
 
-    return smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass, smgrCert, smgrKey, smgrChain
+    return (
+        smgrPath,
+        smgrPort,
+        smgrHost,
+        smgrPhrase,
+        smgrPass,
+        smgrCert,
+        smgrKey,
+        smgrChain,
+    )
 
 
 # Get the config
 try:
-    smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass, smgrCert, smgrKey, smgrChain = getConfigJSON(sys.argv[1])
+    (
+        smgrPath,
+        smgrPort,
+        smgrHost,
+        smgrPhrase,
+        smgrPass,
+        smgrCert,
+        smgrKey,
+        smgrChain,
+    ) = getConfigJSON(sys.argv[1])
 except IndexError:
     try:
-        smgrPath, smgrPort, smgrHost, smgrPhrase, smgrPass, smgrCert, smgrKey, smgrChain = getConfigInput()
+        (
+            smgrPath,
+            smgrPort,
+            smgrHost,
+            smgrPhrase,
+            smgrPass,
+            smgrCert,
+            smgrKey,
+            smgrChain,
+        ) = getConfigInput()
     except KeyboardInterrupt:
         print("Bye!")
         sys.exit()
 
+
 # We need the port always when set so why do it over and over again
 # Plus Last check
-if all([smgrPath,smgrPort,smgrHost,smgrPhrase]):
+if all([smgrPath, smgrPort, smgrHost, smgrPhrase]):
     if not os.path.isfile(smgrPath) or not os.access(smgrPath, os.X_OK):
         print("Invalid ucybsmcl path: file not found or not executable")
         sys.exit(1)
@@ -141,32 +187,32 @@ else:
     print("Not all parameters set")
     sys.exit(1)
 
+
 # Prepare env
-os.environ['LD_LIBRARY_PATH'] = os.path.dirname(smgrPath)
+os.environ["LD_LIBRARY_PATH"] = os.path.dirname(smgrPath)
 
 
 # ---------------------------------------------------
-#      Supporting functions
+# Supporting functions
 # ---------------------------------------------------
 def initArgs():
     # Build Preliminary argList
-    smgrArgs = [smgrPath, '-h', smgrHost, '-n', smgrPhrase, '-p', smgrPass]
+    smgrArgs = [smgrPath, "-h", smgrHost, "-n", smgrPhrase, "-p", smgrPass]
     if smgrCert:
-        smgrArgs.extend(['-certificate', smgrCert])
+        smgrArgs.extend(["-certificate", smgrCert])
     if smgrKey:
-        smgrArgs.extend(['-key', smgrKey])
+        smgrArgs.extend(["-key", smgrKey])
     if smgrChain:
-        smgrArgs.extend(['-chain', smgrChain])
+        smgrArgs.extend(["-chain", smgrChain])
 
     return smgrArgs
-
 
 
 def clrScreen():
     print("\033[2J\033[H", end="")
 
-def runCommand(args):
 
+def runCommand(args):
     try:
         res = subprocess.run(
             args,
@@ -186,6 +232,7 @@ def runCommand(args):
         sys.exit(1)
 
     return res
+
 
 def read_action_with_autorefresh(timeout):
     if not sys.stdin.isatty():
@@ -233,20 +280,20 @@ def read_action_with_autorefresh(timeout):
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
+
 def getVersion():
-    result = subprocess.run(
-        [smgrPath, '-v'], stdout=subprocess.PIPE, check=True)
+    result = subprocess.run([smgrPath, "-v"], stdout=subprocess.PIPE, check=True)
 
     try:
         output = result.stdout.decode("utf-8").strip()
-        match = re.search(r'([0-9][0-9.-]+)\+?', output)
+        match = re.search(r"([0-9][0-9.-]+)\+?", output)
         if match:
             return match.group(1)
         if output:
             return output.split()[0]
         return None
     except AttributeError:
-        print('Error: Could not find version')
+        print("Error: Could not find version")
         return None
 
 
@@ -263,19 +310,25 @@ def getProcessList():
     for line in result.stdout.decode("utf-8").splitlines():
         if not line.strip():
             continue
-        procList[c] = list(filter(None,map(str.strip, line.split("\""))))
+        procList[c] = list(filter(None, map(str.strip, line.split('"'))))
         c += 1
 
     # Header
     clrScreen()
     print()
-    print("Host: %s\t\t       Phrase:  %s" % (smgrHost, smgrPhrase))
-    print("Current time: %s".rjust(55) %
-          (datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")))
-    print('-' * 72)
-    print("| %2s | %25s | %1s | %10s | %18s | " %
-          ("#", "Process Name", "", "PID", "Timestamp"))
-    print('-' * 72)
+    print(
+        "Host: %s\t\t       Phrase:  %s" % (smgrHost, smgrPhrase)
+    )
+    print(
+        ("Current time: %s".rjust(55))
+        % (datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"))
+    )
+    print("-" * 72)
+    print(
+        "| %2s | %25s | %1s | %10s | %18s | "
+        % ("#", "Process Name", "", "PID", "Timestamp")
+    )
+    print("-" * 72)
     # Print
     for c in procList:
         # Make it pretty
@@ -284,24 +337,26 @@ def getProcessList():
         try:
             procPID = procList[c][2]
         except IndexError:
-            procPID = ''
+            procPID = ""
 
         try:
-            procTimestamp = procList[c][3] 
+            procTimestamp = procList[c][3]
         except IndexError:
-            procTimestamp = ''
+            procTimestamp = ""
 
-    # Add the colours
+        # Add the colours
         if procStatus == "R":
             procStatus = bcolors.OK + procStatus + bcolors.RESET
         else:
             procStatus = bcolors.FAIL + procStatus + bcolors.RESET
 
-        print("| %2d | %25s | %3s | %10s | %18s | " %
-              (c, procName, procStatus, procPID, procTimestamp))
+        print(
+            "| %2d | %25s | %3s | %10s | %18s | "
+            % (c, procName, procStatus, procPID, procTimestamp)
+        )
 
     # Close the table
-    print('-' * 72)
+    print("-" * 72)
     return procList
 
 
@@ -317,7 +372,7 @@ def stopProcess(ProcName, Mode=None):
         smgrArgs.append("-m")
         smgrArgs.append(Mode)
 
-    result = runCommand(smgrArgs)
+    runCommand(smgrArgs)
 
 
 def startProcess(ProcName):
@@ -330,12 +385,14 @@ def startProcess(ProcName):
     smgrArgs.append("-s")
     smgrArgs.append(ProcName)
 
-    result = runCommand(smgrArgs)
+    runCommand(smgrArgs)
+
 
 def restartProcess(ProcName):
     stopProcess(ProcName)
     time.sleep(2)
     startProcess(ProcName)
+
 
 def modifyProcess(ProcName, Mode=None, Data=None):
     smgrArgs = initArgs()
@@ -361,8 +418,8 @@ def modifyProcess(ProcName, Mode=None, Data=None):
         smgrArgs.append("StartPath")
         smgrArgs.append(Data)
 
-    
-    result = runCommand(smgrArgs)
+    runCommand(smgrArgs)
+
 
 def commitAction(a, p, d):
     if a == "R":
@@ -375,7 +432,7 @@ def commitAction(a, p, d):
         stopProcess(p, "S")
     elif a.startswith("M") and len(a) == 2:
         m = a[1]
-        modifyProcess(p, m , d)
+        modifyProcess(p, m, d)
     elif a == "S":
         startProcess(p)
     else:
@@ -388,7 +445,7 @@ def validateCommit(inputCommit):
 
 
 def validateNumber(inputNumber, procList):
-    while inputNumber not in range(1, len(procList)+1):
+    while inputNumber not in range(1, len(procList) + 1):
         try:
             inputNumber = int(input(f"Invalid number (1-{len(procList)}), try again: "))
         except ValueError:
@@ -399,14 +456,14 @@ def validateNumber(inputNumber, procList):
 
 def validateNumbers(input_str, procList):
     numbers = []
-    ranges = input_str.split(',')
+    ranges = input_str.split(",")
     for r in ranges:
         r = r.strip()
         if not r:
             continue
-        if '-' in r:
+        if "-" in r:
             try:
-                start, end = map(int, r.split('-', 1))
+                start, end = map(int, r.split("-", 1))
             except ValueError:
                 continue
             if start > end:
@@ -429,7 +486,7 @@ def validateAction(inputAction):
     bulk_actions = ("K", "KA", "R", "S", "MA", "MO")
     single_actions = ("KS", "Q", "RE", "MC", "MP")
     valid_actions = bulk_actions + single_actions
-    
+
     # Match action followed by optional numbers only for bulk actions
     pattern = r"^(" + "|".join(valid_actions) + r")([\d,\-\s]+)?$"
     numbers_pattern = r"^\s*\d+\s*(?:-\s*\d+\s*)?(?:,\s*\d+\s*(?:-\s*\d+\s*)?)*\s*$"
@@ -459,16 +516,17 @@ def validateAction(inputAction):
     # If numbers provided for bulk actions, return them for processing
     if number_part and action in bulk_actions:
         return action, number_part.strip()
-    
+
     return action, None
 
+
 # ---------------------------------------------------
-#      Main loop
+# Main loop
 # ---------------------------------------------------
 
 # Version = getVersion()
 # print(Version)
-try: 
+try:
     while True:
         commit = False
         procList = getProcessList()
@@ -479,14 +537,9 @@ try:
         print("         MC - modify command, MP - modify start path")
         print("         MA - autostart on, MO- autostart off")
         print("         Q - quit, RE - refresh")
-        
-
-
-        ## Additional Command M{X}-> modify property 
-        ## Additional input to change P - path, C - command, A - active, I - inactive 
 
         # Timeout after n seconds a.k.a auto-refresh
-        print("Action: ", end="",flush=True)
+        print("Action: ", end="", flush=True)
         if use_autorefresh:
             line = read_action_with_autorefresh(autorefresh)
             if line is None:
@@ -514,7 +567,8 @@ try:
                     print("No valid process numbers provided")
                     continue
             else:
-                numbers = [validateNumber(int(input("Which process number? ")), procList)]
+                num = int(input("Which process number? "))
+                numbers = [validateNumber(num, procList)]
 
         if inputAction == "MC":
             inputData = input("Provide new command: ")
@@ -527,12 +581,19 @@ try:
         print("\nSelected processes:")
         for num in numbers:
             print(f"- {procList[num][0]}")
-        
-        commit = validateCommit(input(f"\nExecute {inputAction} on these processes? Y/N [Y] ") or "Y")
+
+        commit = validateCommit(
+            input(
+                f"\nExecute {inputAction} on these processes? Y/N [Y] "
+            )
+            or "Y"
+        )
 
         if commit:
             for num in numbers:
-                print(f"Processing {procList[num][0]}...")
+                print(
+                    f"Processing {procList[num][0]}..."
+                )
                 commitAction(inputAction, procList[num][0], inputData)
 except KeyboardInterrupt:
     print("Bye!")
