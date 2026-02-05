@@ -79,7 +79,7 @@ This is an attempt to make the interaction with ServiceManager on Unix / command
 
 ### Usage
 
-The process list can be refreshed either manually (RE action) or by default it refreshes every 10 seconds automatically as long as we are not in the middle the process triggering a action ( for example the script is waiting for us to commit or select a service number ).
+The process list can be refreshed either manually (RE action) or by default it refreshes every 10 seconds automatically. Auto-refresh pauses as soon as you start typing and resumes after the action is entered. You can disable auto-refresh by setting `AUTOMIC_AUTOREFRESH=0`.
 
 The script can be started in two modes
 
@@ -97,7 +97,10 @@ The format of the configuration file is following:
     "port": "8872",
     "phrase": "Automic1",
     "pass": false,
-    "smgrclPath": "/app/Automic_12.3/Automation.Platform/ServiceManager/bin/ucybsmcl"
+    "smgrclPath": "/app/Automic_12.3/Automation.Platform/ServiceManager/bin/ucybsmcl",
+    "certificate": "/app/Automic_12.3/Automation.Platform/ServiceManager/bin/client.pem",
+    "key": "/app/Automic_12.3/Automation.Platform/ServiceManager/bin/client.key",
+    "chain": "/app/Automic_12.3/Automation.Platform/ServiceManager/bin/ca-chain.pem"
     },
 {
     "name": "Test_V21",
@@ -111,6 +114,7 @@ The format of the configuration file is following:
 ```
 
 You can define as many connections as you like
+Certificate authentication is optional. If you set `certificate` or `key`, you must set both. `chain` is optional.
 
 **Demo:**
 
@@ -124,6 +128,8 @@ If there is only one connection defined in the config file you will not get prom
 #### Without configuration - interactive mode
 
 In this mode the script will ask you ( of use env variables ) to establish the connection to ServiceManager
+If you want to use certificate authentication without config, set:
+`AUTOMIC_SMCERT`, `AUTOMIC_SMKEY`, and optionally `AUTOMIC_SMCHAIN`. The script does not prompt for these values.
 
 **Demo providing all the data interactively:**
 
